@@ -1,0 +1,6 @@
+{
+    "host":"localhost", 
+    "port":9000,
+    "table_prefix":null,
+    "table_prefix_separator":"_"
+}
