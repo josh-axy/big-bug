@@ -5,7 +5,7 @@ __all__=(
 from selenium import webdriver
 import common
 import functools
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 import threading
 from collections.abc import Iterable,Callable
 
@@ -23,28 +23,25 @@ class Crawler:
     def __init__(self,tasks,driver_cnt:int=3):
         self.driver_cnt = driver_cnt
         self.drivers = [DriverWrapper(common.WEBDRIVER_PATH) for i in range(driver_cnt)]
-        self.executor=ThreadPoolExecutor(max_workers=self.driver_cnt)
         self.end_flag = False
-        self.end_func = lambda:self.end_flag
         self.__set_tasks(tasks)
 
-        def serve_func():
-            for d in self.drivers:
-                self.executor.submit(
-                    d.work,
-                    self.tasks,
-                    self.end_func
-                )
-        self.serve_thread = threading.Thread(target=serve_func)
+        # 好像用 executor 不太好控制,比如 shutdown 时似乎没有阻塞？？（可能只是我用不习惯而已）
+        # self.executor=ThreadPoolExecutor(max_workers=self.driver_cnt)
+        self.threads = [
+            threading.Thread(target=d.work,args=(self.tasks,))
+            for d in self.drivers
+        ]
 
     def serve(self):
-        self.serve_thread.start()
+        for t in self.threads:
+            t.start()
 
     def close(self):
-        self.end_flag = True 
-        # shutdown，等待结束
-        self.executor.shutdown(wait=True)
-        self.serve_thread.join()
+        for d in self.drivers:
+            d.set_end()
+        for t in self.threads:
+            t.join()
 
     def __set_tasks(self,tasks:common.LockedIterator):
         assert isinstance(tasks,Iterable)
@@ -57,6 +54,10 @@ class DriverWrapper:
     def __init__(self,web_driver_path:str):
         self.web_driver_path = web_driver_path
         self.driver = None
+        self.end_flag = False
+
+    def set_end(self):
+        self.end_flag = True
         
     def activate(self):
         # self.driver = webdriver.Firefox(executable_path=common.WEBDRIVER_PATH)
@@ -64,12 +65,16 @@ class DriverWrapper:
 
     def close(self):
         if self.driver is not None:
-            self.driver.close()
+            self.driver.quit()
+            self.driver.stop_client()
+            # self.driver.close()
 
     def work(self,
-            tasks: common.LockedIterator,
-            end_func: Callable=lambda:True):
-        while not end_func():
+            tasks: common.LockedIterator):
+        # while not self.end_flag:
+        tag=True
+        while tag:
+            tag=False
             try:
                 self.activate()
                 for task in tasks:

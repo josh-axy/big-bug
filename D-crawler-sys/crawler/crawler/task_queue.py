@@ -14,14 +14,18 @@ class TaskQueue:
         for task in crawl_job.tasks_gen(urls):
             self.queue.put(task)
 
-    def get_task(self):
+    def task_generator(self):
         while True:
             task = self.queue.get()
+            self.queue.task_done()
             if task is None:
                 break
+            yield task
+        return
 
     def close(self):
         self.queue.put(None)
+        self.queue.join()
 
     def __del__(self):
         pass # ??????

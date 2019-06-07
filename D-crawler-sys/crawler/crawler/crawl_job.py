@@ -20,6 +20,7 @@ class CrawlJob:
         self.core = crawl_job_core
         self.save_fn = save_fn
 
+    # TODO 还没有去重功能，应该可以用布隆过滤器
     def work(self, driver, url):
         driver:webdriver.firefox.webdriver.WebDriver
         driver.get(url)
