@@ -3,11 +3,12 @@ __all__ = (
 )
 
 import functools
-from crawl_task_core import CrawlTaskCore
+from .crawl_job_core import CrawlJobCore
+
 
 class CrawlJob:
-    def __init__(self, crawl_task_core: CrawlTaskCore):
-        self.core = crawl_task_core
+    def __init__(self, crawl_job_core: CrawlJobCore):
+        self.core = crawl_job_core
 
     def tasks_gen(self, urls):
         for url in urls:

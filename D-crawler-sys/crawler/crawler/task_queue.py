@@ -3,7 +3,7 @@ __all__ = (
 )
 
 from queue import Queue
-from crawl_job import CrawlJob
+from .crawl_job import CrawlJob
 
 class TaskQueue:
     def __init__(self, maxsize=50):
