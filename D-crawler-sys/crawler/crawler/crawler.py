@@ -65,16 +65,14 @@ class DriverWrapper:
 
     def close(self):
         if self.driver is not None:
+            # # 似乎应该用quit 而不是close，否则结束时会报错
             self.driver.quit()
             self.driver.stop_client()
             # self.driver.close()
 
     def work(self,
             tasks: common.LockedIterator):
-        # while not self.end_flag:
-        tag=True
-        while tag:
-            tag=False
+        while not self.end_flag:
             try:
                 self.activate()
                 for task in tasks:

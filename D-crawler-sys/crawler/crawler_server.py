@@ -30,7 +30,6 @@ class CrawlerServer:
         # 顺序别反了，否则发生死锁
         self.task_queue.close()
         self.crawler.close()
-        # self.task_queue.close()
 
     def add_crawl_job(self,core:crawler.CrawlJobCore):
         assert isinstance(core.name,str) and core.name not in self.crawl_job_dict
