@@ -12,6 +12,8 @@ export server_root_path="${project_root_path}/server"
 
 # crawler 根目录
 export crawler_root_path="${project_root_path}/crawler"
+# webdriver 路径
+export webdriver_path="${crawler_root_path}/geckodriver"
 
 # config 根目录
 export config_root_path="${project_root_path}/config"

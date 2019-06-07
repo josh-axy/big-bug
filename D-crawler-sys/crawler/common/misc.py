@@ -6,7 +6,7 @@ __all__=(
 from .timetools import get_cur_timeStamp
 
 def print_exception(execption:Exception):
-    print(get_cur_timeStamp(), execption)
+    print(get_cur_timeStamp(), "{}:".format(type(execption)), execption)
 
 def print_info(string:str):
     print(get_cur_timeStamp(), string)

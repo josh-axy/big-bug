@@ -6,6 +6,7 @@ __all__=(
     "SEVER_ROOT_PATH",
     "CRAWLER_ROOT_PATH",
     "CONFIG_ROOT_PATH",
+    "WEBDRIVER_PATH",
 )
 
 
@@ -36,3 +37,6 @@ CRAWLER_ROOT_PATH =\
 
 CONFIG_ROOT_PATH =\
     get_env("config_root_path")
+
+WEBDRIVER_PATH=\
+    get_env("webdriver_path")
