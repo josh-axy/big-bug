@@ -9,14 +9,15 @@ from queue import Queue
 from enum import Enum
 import re
 from collections.abc import Iterable
-
+from selenium.common.exceptions import NoSuchElementException
 # from selenium import webdriver
 
 
 class Selector:
     def __init__(self,
-                 css_selector:str = None,
+                 css_selector:str,
                  select_elements: bool = False):
+        assert css_selector is not None 
         self.css_selector = css_selector
         self.select_elements = select_elements
 
@@ -31,13 +32,13 @@ class Selector:
             return self._select(target)
 
     def _select(self, target)->list:
-        if self.css_selector is None:
-            return [target]
         # target:webdriver.firefox.webdriver.WebDriver
         if self.select_elements:
             return target.find_elements_by_css_selector(self.css_selector)
         else:
-            ele = target.find_element_by_css_selector(self.css_selector)
-            return [] if ele is None else [ele]
-
+            try:
+                ele = target.find_element_by_css_selector(self.css_selector)
+                return ele
+            except NoSuchElementException:
+                return []
 
