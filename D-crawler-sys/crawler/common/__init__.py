@@ -7,3 +7,4 @@ from . import strtools
 from . import randomtools
 from . import timetools
 from . import mathtools
+from . import inspect

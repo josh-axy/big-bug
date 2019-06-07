@@ -6,7 +6,8 @@ import functools
 from collections.abc import Callable
 from .crawl_job_core import CrawlJobCore
 
-from selenium import webdriver
+# from selenium import webdriver
+import common
 
 
 class CrawlJob:
@@ -17,12 +18,17 @@ class CrawlJob:
                 url = url,
                 result_list = result_list
         '''
+        # 先判断 save_fn 的参数是否符合要求
+        assert (
+            set(common.inspect.get_params(save_fn)) == \
+                set(("crawl_job_core","url","result_list"))
+        )
         self.core = crawl_job_core
         self.save_fn = save_fn
 
     # TODO 还没有去重功能，应该可以用布隆过滤器
     def work(self, driver, url):
-        driver:webdriver.firefox.webdriver.WebDriver
+        # driver:webdriver.firefox.webdriver.WebDriver
         driver.get(url)
         result_list=[]
         if len(self.core.selectors)<=0:
