@@ -10,6 +10,10 @@ from .task_queue import TaskQueue
 
 
 class CrawlerService:
+    '''
+        爬虫服务
+        封装了crawler模块里各种复杂操作，方便外部调用爬虫
+    '''
     def __init__(self, save_fn: Callable):
         # 先判断 save_fn 的参数是否符合要求
         assert (

@@ -4,6 +4,9 @@ import collections
 
 class LockedIterator():
     '''
+        加锁的迭代器，使迭代线程安全
+    '''
+    '''
         python 3.x 的 LockedIterator 写法
     '''
     def __init__(self,it):
@@ -22,6 +25,9 @@ class LockedIterator():
 
 
 def thread_safe_generator(gen_fn):
+    '''
+        用于构造线程安全生成器的装饰器
+    '''
     @functools.wraps(gen_fn)
     def wrapper(*args,**kw):
         return LockedIterator(gen_fn(*args,**kw))

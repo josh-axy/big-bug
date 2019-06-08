@@ -10,15 +10,24 @@ import threading
 from collections.abc import Iterable,Callable
 
 class DriverCnt:
+    '''
+        限定打开的 webdriver 数量范围
+        (我这里只是试了一下python属性描述符而已)
+    '''
     def __init__(self,name):
         self.name = name
 
     def __set__(self,instance,value):
         assert isinstance(value,int)
-        value = value if value > 1 and value < 6 else 3
+        value = value if value > 1 and value < 10 else 3
         instance.__dict__[self.name]=value
 
 class Crawler:
+    '''
+        爬虫框架
+        开启多个 driver 运行爬虫 task
+        task 只接收 driver 这一个参数,内部使用 driver 爬取数据
+    '''
     driver_cnt = DriverCnt("driver_cnt")
     def __init__(self,tasks,driver_cnt:int=3):
         self.driver_cnt = driver_cnt
@@ -39,6 +48,7 @@ class Crawler:
 
     def close(self):
         for d in self.drivers:
+            # 通知 DriverWrapper 即将关闭 driver
             d.set_end()
         for t in self.threads:
             t.join()
@@ -51,6 +61,10 @@ class Crawler:
 
 
 class DriverWrapper:
+    '''
+        封装 driver
+        对 driver 增加了错误处理
+    '''
     def __init__(self,web_driver_path:str):
         self.web_driver_path = web_driver_path
         self.driver = None
@@ -69,9 +83,13 @@ class DriverWrapper:
             self.driver.quit()
             self.driver.stop_client()
             # self.driver.close()
+            self.driver = None
 
     def work(self,
             tasks: common.LockedIterator):
+        '''
+            接收 crawl_tasks，并执行这些 task 
+        '''
         while not self.end_flag:
             try:
                 self.activate()

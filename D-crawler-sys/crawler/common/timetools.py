@@ -54,11 +54,11 @@ def timer_context(tag="timer", prefix="======", suffix="======"):
     _print("end_time {}".format(t2))
     _print("using_time {}".format(using_time))
 
-
+#获取当前时间戳，以字符串形式返回
 def get_cur_timeStamp(str_format=defaultTimeStampFormat):
     return datetime.datetime.now().strftime(str_format)
 
-
+#获取给定时间的字符串形式
 def get_timeStamp(_time, str_format=defaultTimeStampFormat):
     return datetime.datetime.fromtimestamp(_time).strftime(str_format)
 

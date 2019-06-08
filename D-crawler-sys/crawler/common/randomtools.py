@@ -15,9 +15,16 @@ defaultLength = 7
 
 
 def gen_random_int(length=defaultLength):
+    '''
+        随机获取一个自然数，其十进制位最长位 length
+    '''
     return random.randint(0, nine_nine[length % 10])
 
 
 def gen_random_int_str(length=defaultLength):
+    '''
+        随机获取一个自然数的字符串，其十进制位最长位 length
+        不足的补0
+    '''
     r = gen_random_int(length)
     return str(r).zfill(length)
