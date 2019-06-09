@@ -11,7 +11,7 @@ from aiohttp import web
 import json
 import threading
 
-from redis_tools import redis_queue
+from redis_tools import QUEUE
 
 class CrawlerServer:
     '''
@@ -60,7 +60,7 @@ class CrawlerServer:
         '''
         while not self.end_flag:
             try:
-                obj = redis_queue.get_wait(timeout=self.timeout)
+                obj = QUEUE.get_wait(timeout=self.timeout)
                 if obj is None:
                     # 取出为空，说明超时了
                     continue

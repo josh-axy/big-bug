@@ -1,5 +1,5 @@
 __all__=(
-    "redis_queue",
+    "QUEUE",
 )
 
 import common
@@ -20,7 +20,7 @@ redis_conn = redis.StrictRedis(
     decode_responses=decode_responses
 )
 
-redis_queue = RedisQueue(
+QUEUE = RedisQueue(
     redis_conn = redis_conn,
     name = queue_name,
     namespace = queue_namespace
