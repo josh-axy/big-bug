@@ -1,3 +1,7 @@
 {
-    "executor_cnt":3
+    "ip":"0.0.0.0",
+    "port":8888,
+    "driver_cnt":3,
+    "max_driver_cnt":10,
+    "min_driver_cnt":1
 }

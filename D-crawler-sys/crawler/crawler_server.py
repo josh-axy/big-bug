@@ -3,10 +3,11 @@ import common
 from crawler import *
 from collections.abc import Iterable, Callable
 from contextlib import contextmanager
-
-# tmp
+from collections import namedtuple
 import os
 import random
+import asyncio
+from aiohttp import web
 
 class CrawlerServer:
     '''
@@ -15,7 +16,22 @@ class CrawlerServer:
     '''
     def __init__(self):
         self.C = CrawlerService(self.save_fn)
+        self.ip = common.args.ip
+        self.port = common.args.port
+
+        self.RouteParam = namedtuple(
+            "RouteParam", ["method", "path", "handler"])
+        self.route_param_list = []
         pass
+
+
+    def start(self):
+        with self.run_crawler():
+            # 这里利用了 run_forever 阻塞了主线程
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(self.init_app(loop))
+            loop.run_forever()
 
     @contextmanager
     def run_crawler(self):
@@ -26,7 +42,6 @@ class CrawlerServer:
         self.C.start()
         yield
         self.C.close()
-            
 
     def add_crawl_job(self, core: CrawlJobCore):
         self.C.add_crawl_job(core)
@@ -52,3 +67,49 @@ class CrawlerServer:
         with open(path,"w") as fw:
             fw.write(str(result_list))
         pass
+
+    def run_app(self):
+        # loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.init_app(loop))
+        loop.run_forever()
+        pass
+
+    async def init_app(self, loop):
+        app = web.Application(loop=loop)
+        self._build_controllers()
+        # self._init_add_static(app)
+        self._init_add_route(app)
+        srv = await loop.create_server(app.make_handler(), self.ip, self.port)
+        print('Py server started at {}:{}...'.format(self.ip, self.port))
+        return srv
+
+    '''
+    以下为初始化函数
+    '''
+    def _init_add_route(self, app):
+        '''
+        为webapp设置路由
+        '''
+        for ele in self.route_param_list:
+            app.router.add_route(ele.method, ele.path, ele.handler)
+
+    
+    def controller(self, method, path):
+        '''
+        controller装饰器，模仿springboot
+        '''
+        def wrapper(func):
+            self.route_param_list.append(self.RouteParam(
+                method=method, path=path, handler=func))
+            return func            
+        return wrapper
+
+    def _build_controllers(self):
+        '''
+        controllers
+        '''
+        @self.controller("POST","/hello")
+        async def hello(request:web.Request):
+            return web.Response(body="hello")

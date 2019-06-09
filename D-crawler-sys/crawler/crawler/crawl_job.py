@@ -45,8 +45,8 @@ class CrawlJob:
         result_list=[]
         if len(self.selectors)<=0:
             content=driver.page_source
-            if self.core.reg_pattern is not None:
-                result_list.extend(self.core.reg_pattern.findall(content))
+            if self.core.reg is not None:
+                result_list.extend(self.core.reg.findall(content))
             else:
                 result_list=[content]
         else:
@@ -56,8 +56,8 @@ class CrawlJob:
                 target = selector.select(target)
             for ele in target:
                 content = ele.get_attribute("innerHTML")
-                if self.core.reg_pattern is not None:
-                    result_list.extend(self.core.reg_pattern.findall(content))
+                if self.core.reg is not None:
+                    result_list.extend(self.core.reg.findall(content))
                 else:
                     result_list.append(content)
         # 调用 save 函数
