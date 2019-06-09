@@ -8,3 +8,13 @@ from . import randomtools
 from . import timetools
 from . import mathtools
 from . import inspect
+
+# _end_flag = False
+
+# def get_end_flag():
+#     # global _end_flag
+#     return _end_flag
+
+# def set_end_flag():
+#     global _end_flag
+#     _end_flag = True

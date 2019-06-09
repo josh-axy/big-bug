@@ -8,6 +8,10 @@ import os
 import random
 import asyncio
 from aiohttp import web
+import json
+import threading
+
+from redis_tools import redis_queue
 
 class CrawlerServer:
     '''
@@ -18,10 +22,14 @@ class CrawlerServer:
         self.C = CrawlerService(self.save_fn)
         self.ip = common.args.ip
         self.port = common.args.port
-
+        
         self.RouteParam = namedtuple(
             "RouteParam", ["method", "path", "handler"])
         self.route_param_list = []
+
+        self.end_flag = False
+        self.timeout = 20 # redis 队列 pop 等待 超时时间
+        self.thread_task_fetcher = threading.Thread(target=self.run_task_fetcher)
         pass
 
 
@@ -40,8 +48,28 @@ class CrawlerServer:
             优势是出错后能跳到__exit__部分把关闭工作给做了
         '''
         self.C.start()
+        self.thread_task_fetcher.start()
         yield
+        self.end_flag = True # 设置终结
+        self.thread_task_fetcher.join()
         self.C.close()
+
+    def run_task_fetcher(self):
+        '''
+            从 redis 中获取 任务
+        '''
+        while not self.end_flag:
+            try:
+                obj = redis_queue.get_wait(timeout=self.timeout)
+                if obj is None:
+                    # 取出为空，说明超时了
+                    continue
+                task_info = CrawlTaskJson.from_json_str(obj)
+                self.add_urls(task_info.job_name,task_info.urls)
+            except Exception as e:
+                common.print_exception(e)
+            
+
 
     def add_crawl_job(self, core: CrawlJobCore):
         self.C.add_crawl_job(core)

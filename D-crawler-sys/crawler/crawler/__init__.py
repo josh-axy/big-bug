@@ -4,6 +4,7 @@ from .crawler import Crawler
 from .selector import Selector 
 from .task_queue import TaskQueue
 from .crawler_service import CrawlerService
+from .crawl_task_json import CrawlTaskJson
 
 __all__=(
     "CrawlJob",
@@ -12,4 +13,5 @@ __all__=(
     "Selector",
     "TaskQueue",
     "CrawlerService",
+    "CrawlTaskJson",
 )
