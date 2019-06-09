@@ -40,6 +40,8 @@ class CrawlJob:
             是实际上的 crawl_task
             利用 selenium 的 webdriver 爬取数据
         '''
+        # 打印开始信息
+        common.print_info("[Task start] --> CrawlJob({}): {}".format(self.core.name,url))
         # driver:webdriver.firefox.webdriver.WebDriver
         driver.get(url)
         result_list=[]
@@ -65,7 +67,7 @@ class CrawlJob:
                      url=url,
                      result_list=result_list)
         # 打印结束信息
-        common.print_info("CrawlJob({}): {} ---> done".format(self.core.name,url))
+        common.print_info("[Task done] ==> CrawlJob({}): {}".format(self.core.name,url))
 
     def tasks_gen(self, urls):
         '''

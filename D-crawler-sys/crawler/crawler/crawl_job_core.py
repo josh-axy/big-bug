@@ -24,6 +24,8 @@ class CrawlJobCore:
             作用于 selectors 最后结果的每一项
             如果 selectors 没有提供，则作用与原始页面内容
     '''
+    __slots__=("name","selectors","reg")
+    
     def __init__(self, name: str, selectors: list = None, reg: str = None):
         self.name = name 
         
