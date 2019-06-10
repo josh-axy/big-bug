@@ -1,0 +1,19 @@
+{
+    "hbase_thrift_host": "localhost",
+    "hbase_thrift_port": 9090,
+    "table_prefix": "crawler",
+    "table_prefix_separator": "_",
+    "column_families": [
+        "rule",
+        "results"
+    ],
+    "rule": {
+        "row_key": "__rule__",
+        "rule_column": "rule:rule",
+        "max_versions":1
+    },
+    "results": {
+        "column_family": "results",
+        "max_versions":1
+    }
+}

@@ -8,6 +8,7 @@ from . import randomtools
 from . import timetools
 from . import mathtools
 from . import inspect
+from . import lru_cache
 
 # _end_flag = False
 

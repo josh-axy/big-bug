@@ -1,6 +1,6 @@
 {
+    "（这个配置文件暂时没用）":null,
+    "protocol":"hdfs",
     "host":"localhost", 
-    "port":9000,
-    "table_prefix":null,
-    "table_prefix_separator":"_"
+    "port":9000
 }

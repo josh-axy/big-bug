@@ -6,7 +6,10 @@ __all__=(
     "min_driver_cnt",
     "redis_conf",
     "hdfs_conf",
+    "hbase_conf",
     "zk_conf",
+    # "hdfs_url",
+    # "hbase_url",
 )
 
 
@@ -29,4 +32,12 @@ min_driver_cnt = _json["min_driver_cnt"]
 
 redis_conf = get_config("redis-conf.json")
 hdfs_conf = get_config("hdfs-conf.json")
+hbase_conf = get_config("hbase-conf.json")
 zk_conf = get_config("zookeeper-conf.json")
+
+# hdfs_url = "{}://{}:{}".format(
+#     hdfs_conf["protocol"],
+#     hdfs_conf["host"],
+#     hdfs_conf["port"]
+# )
+# hbase_url = "{}{}".format(hdfs_url,hbase_conf["hbase_rootdir"])

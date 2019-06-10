@@ -26,8 +26,9 @@ class CrawlerService:
             driver_cnt=3)
         # 用于保存结果的函数
         self.save_fn = save_fn
-        # 用于去job重
-        self.crawl_job_dict = dict()
+
+        # # 用于去job重
+        # self.crawl_job_dict = dict()
 
     def __enter__(self):
         self.start()
@@ -44,12 +45,16 @@ class CrawlerService:
         self.task_queue.close()
         self.crawler.close()
 
-    def add_crawl_job(self, core: CrawlJobCore):
-        assert isinstance(
-            core.name, str) and core.name not in self.crawl_job_dict
-        self.crawl_job_dict[core.name] = CrawlJob(core, self.save_fn)
-
-    def add_urls(self, crawl_job_name: str, urls: Iterable):
-        assert crawl_job_name in self.crawl_job_dict
-        job = self.crawl_job_dict[crawl_job_name]
+    def add_urls(self, crawl_job_core:CrawlJobCore, urls: Iterable):
+        job = CrawlJob(crawl_job_core,self.save_fn)
         self.task_queue.add_tasks(job, urls)
+
+    # def add_crawl_job(self, core: CrawlJobCore):
+    #     assert isinstance(
+    #         core.name, str) and core.name not in self.crawl_job_dict
+    #     self.crawl_job_dict[core.name] = CrawlJob(core, self.save_fn)
+
+    # def add_urls(self, crawl_job_name: str, urls: Iterable):
+    #     assert crawl_job_name in self.crawl_job_dict
+    #     job = self.crawl_job_dict[crawl_job_name]
+    #     self.task_queue.add_tasks(job, urls)

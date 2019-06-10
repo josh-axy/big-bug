@@ -10,8 +10,13 @@ import asyncio
 from aiohttp import web
 import json
 import threading
-
+# 取名 QUEUE,DB 是为了应付换数据库的情况（名字对应不上就很尴尬）
 from redis_tools import QUEUE
+import hbase_tools as DB
+
+class CrawlJobException(Exception):
+    def __init__(self,msg):
+        super().__init__(msg)
 
 class CrawlerServer:
     '''
@@ -30,6 +35,9 @@ class CrawlerServer:
         self.end_flag = False
         self.timeout = 20 # redis 队列 pop 等待 超时时间
         self.thread_task_fetcher = threading.Thread(target=self.run_task_fetcher)
+
+        # crawl_job 的 LRU 缓存
+        self.job_lru_cache = common.lru_cache.LRUCache(capacity=30)
         pass
 
 
@@ -60,22 +68,33 @@ class CrawlerServer:
         '''
         while not self.end_flag:
             try:
-                obj = QUEUE.get_wait(timeout=self.timeout)
-                if obj is None:
+                obj_tuple = QUEUE.get_wait(timeout=self.timeout)
+                # print(obj)
+                if obj_tuple is None:
                     # 取出为空，说明超时了
                     continue
-                task_info = CrawlTaskJson.from_json_str(obj)
+                key,content = obj_tuple
+                task_info = CrawlTaskJson.from_json_str(content)
                 self.add_urls(task_info.job_name,task_info.urls)
             except Exception as e:
                 common.print_exception(e)
             
 
 
-    def add_crawl_job(self, core: CrawlJobCore):
-        self.C.add_crawl_job(core)
+    # def add_crawl_job(self, core: CrawlJobCore):
+    #     self.C.add_crawl_job(core)
 
     def add_urls(self, crawl_job_name: str, urls: Iterable):
-        self.C.add_urls(crawl_job_name, urls)
+        # self.C.add_urls(crawl_job_name, urls)
+        job_core:CrawlJobCore
+        job_core = self.job_lru_cache.get(crawl_job_name)
+        if job_core is None:
+            # 如果缓存中没有，从数据库获取
+            job_core = DB.get_job_rule(crawl_job_name)
+            if job_core is None:
+                raise CrawlJobException("No such crawl job: {}".format(crawl_job_name))
+        self.C.add_urls(job_core,urls)
+        
 
     def save_fn(self,
                 crawl_job_core: CrawlJobCore,
@@ -84,17 +103,20 @@ class CrawlerServer:
         '''
             该函数用于保存爬取的数据
         '''
-        '''
-            TODO 现在这里只是临时的函数
-        '''
-        d = "tmptmptmp"
-        if not os.path.exists(d):
-            os.mkdir(d)
-        core_name = crawl_job_core.name
-        path=os.path.join(d,core_name + url.split("/")[2])+str(random.randint(0,10000))+".txt"
-        with open(path,"w") as fw:
-            fw.write(str(result_list))
-        pass
+        flag = DB.save_results(crawl_job_core,url,result_list)
+        if not flag:
+            common.print_info("failed to save results")
+        # '''
+        #     TODO 现在这里只是临时的函数
+        # '''
+        # d = "tmptmptmp"
+        # if not os.path.exists(d):
+        #     os.mkdir(d)
+        # core_name = crawl_job_core.name
+        # path=os.path.join(d,core_name + url.split("/")[2])+str(random.randint(0,10000))+".txt"
+        # with open(path,"w") as fw:
+        #     fw.write(str(result_list))
+        # pass
 
     def run_app(self):
         # loop = asyncio.get_event_loop()
