@@ -1,8 +1,8 @@
 # host IP 应该设置成公网IP
-export host_ip="localhost"
+export host="localhost"
 
 # 本地IP
-export localhost_ip="localhost"
+export localhost="localhost"
 
 # 项目根目录
 export project_root_path=`(cd $(dirname $0);pwd)`

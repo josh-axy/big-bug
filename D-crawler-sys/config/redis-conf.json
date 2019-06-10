@@ -2,6 +2,6 @@
     "host":"localhost", 
     "port":6379,
     "decode_responses":true,
-    "queue_namespace":"queue",
-    "queue_name":"crawler"
+    "queue_namespace":"crawler",
+    "queue_name":"queue"
 }
