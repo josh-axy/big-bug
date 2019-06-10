@@ -1,4 +1,5 @@
 import common
+
 # import crawler
 from crawler import *
 from collections.abc import Iterable, Callable
@@ -14,32 +15,35 @@ import threading
 from redis_tools import QUEUE
 import hbase_tools as DB
 
+
 class CrawlJobException(Exception):
-    def __init__(self,msg):
+    def __init__(self, msg):
         super().__init__(msg)
+
 
 class CrawlerServer:
     '''
         提供爬虫服务
         （访问数据库，调用爬虫）
     '''
+
     def __init__(self):
         self.C = CrawlerService(self.save_fn)
         self.ip = common.args.ip
         self.port = common.args.port
-        
+
         self.RouteParam = namedtuple(
             "RouteParam", ["method", "path", "handler"])
         self.route_param_list = []
 
         self.end_flag = False
-        self.timeout = 20 # redis 队列 pop 等待 超时时间
-        self.thread_task_fetcher = threading.Thread(target=self.run_task_fetcher)
+        self.timeout = 20  # redis 队列 pop 等待 超时时间
+        self.thread_task_fetcher = threading.Thread(
+            target=self.run_task_fetcher)
 
         # crawl_job 的 LRU 缓存
         self.job_lru_cache = common.lru_cache.LRUCache(capacity=30)
         pass
-
 
     def start(self):
         with self.run_crawler():
@@ -58,7 +62,7 @@ class CrawlerServer:
         self.C.start()
         self.thread_task_fetcher.start()
         yield
-        self.end_flag = True # 设置终结
+        self.end_flag = True  # 设置终结
         self.thread_task_fetcher.join()
         self.C.close()
 
@@ -73,50 +77,64 @@ class CrawlerServer:
                 if obj_tuple is None:
                     # 取出为空，说明超时了
                     continue
-                key,content = obj_tuple
+                _, content = obj_tuple
                 task_info = CrawlTaskJson.from_json_str(content)
-                self.add_urls(task_info.job_name,task_info.urls)
+                # 判断是否为合法url
+                for url in task_info.urls:
+                    assert common.urltools.check_url(url)
+                self.add_urls(
+                    task_info.job_name,
+                    task_info.layer,
+                    task_info.urls
+                )
             except Exception as e:
                 common.print_exception(e)
-            
-
 
     # def add_crawl_job(self, core: CrawlJobCore):
     #     self.C.add_crawl_job(core)
 
-    def add_urls(self, crawl_job_name: str, urls: Iterable):
+    def add_urls(self, crawl_job_name: str, layer: int, urls: Iterable):
         # self.C.add_urls(crawl_job_name, urls)
-        job_core:CrawlJobCore
+        job_core: CrawlJobCore
         job_core = self.job_lru_cache.get(crawl_job_name)
         if job_core is None:
             # 如果缓存中没有，从数据库获取
             job_core = DB.get_job_rule(crawl_job_name)
             if job_core is None:
-                raise CrawlJobException("No such crawl job: {}".format(crawl_job_name))
-        self.C.add_urls(job_core,urls)
-        
+                raise CrawlJobException(
+                    "No such crawl job: {}".format(crawl_job_name))
+        self.C.add_urls(job_core, layer, urls)
 
     def save_fn(self,
+                layer: int,
                 crawl_job_core: CrawlJobCore,
                 url: str,
                 result_list: list):
         '''
             该函数用于保存爬取的数据
         '''
-        flag = DB.save_results(crawl_job_core,url,result_list)
-        if not flag:
-            common.print_info("failed to save results")
-        # '''
-        #     TODO 现在这里只是临时的函数
-        # '''
-        # d = "tmptmptmp"
-        # if not os.path.exists(d):
-        #     os.mkdir(d)
-        # core_name = crawl_job_core.name
-        # path=os.path.join(d,core_name + url.split("/")[2])+str(random.randint(0,10000))+".txt"
-        # with open(path,"w") as fw:
-        #     fw.write(str(result_list))
-        # pass
+        assert layer >= 0 and layer < crawl_job_core.layer_cnt()
+        # 如果到了最后一层，应该存数据到外村数据库
+        if layer == crawl_job_core.layer_cnt()-1:
+            flag = DB.save_results(crawl_job_core, url, result_list)
+            if not flag:
+                common.print_info("failed to save results")
+        # 否则认为是中间结果，加入队列
+        # 中间结果只支持 url
+        else:
+            # 首先判断是否结果为url
+            for url in result_list:
+                assert common.urltools.check_url(url)
+            # 加入队列
+            _job_name =crawl_job_core.name
+            _layer = layer+1
+            for url in result_list:
+                # 这里的 task 我设置成 url 仅一个，只是为了方便
+                task = CrawlTaskJson(_job_name,_layer,[url])
+                task_json = task.get_json()
+                # 加入队列
+                QUEUE.put(task_json)
+
 
     def run_app(self):
         # loop = asyncio.get_event_loop()
@@ -138,6 +156,7 @@ class CrawlerServer:
     '''
     以下为初始化函数
     '''
+
     def _init_add_route(self, app):
         '''
         为webapp设置路由
@@ -145,7 +164,6 @@ class CrawlerServer:
         for ele in self.route_param_list:
             app.router.add_route(ele.method, ele.path, ele.handler)
 
-    
     def controller(self, method, path):
         '''
         controller装饰器，模仿springboot
@@ -153,13 +171,13 @@ class CrawlerServer:
         def wrapper(func):
             self.route_param_list.append(self.RouteParam(
                 method=method, path=path, handler=func))
-            return func            
+            return func
         return wrapper
 
     def _build_controllers(self):
         '''
         controllers
         '''
-        @self.controller("POST","/hello")
-        async def hello(request:web.Request):
+        @self.controller("POST", "/hello")
+        async def hello(request: web.Request):
             return web.Response(body="hello")
