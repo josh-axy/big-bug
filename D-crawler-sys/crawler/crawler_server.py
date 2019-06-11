@@ -13,6 +13,7 @@ import json
 import threading
 # 取名 QUEUE,DB 是为了应付换数据库的情况（名字对应不上就很尴尬）
 from redis_tools import QUEUE
+from redis_tools import CLOSE_SET
 import hbase_tools as DB
 
 
@@ -79,6 +80,10 @@ class CrawlerServer:
                     continue
                 _, content = obj_tuple
                 task_info = CrawlTaskJson.from_json_str(content)
+                # 如果该任务在 close_set 里，说明它被手动关闭了
+                if CLOSE_SET.is_member(task_info.job_name):
+                    common.print_info("this crawl_job has been closed: {}".format(task_info.job_name))
+                    continue 
                 # 判断是否为合法url
                 for url in task_info.urls:
                     assert common.urltools.check_url(url)
@@ -94,6 +99,10 @@ class CrawlerServer:
     #     self.C.add_crawl_job(core)
 
     def add_urls(self, crawl_job_name: str, layer: int, urls: Iterable):
+        # 如果该任务在 close_set 里，说明它被手动关闭了
+        if CLOSE_SET.is_member(crawl_job_name):
+            common.print_info("this crawl_job has been closed: {}".format(crawl_job_name))
+            return
         # self.C.add_urls(crawl_job_name, urls)
         job_core: CrawlJobCore
         job_core = self.job_lru_cache.get(crawl_job_name)
@@ -113,6 +122,11 @@ class CrawlerServer:
         '''
             该函数用于保存爬取的数据
         '''
+        # 如果该任务在 close_set 里，说明它被手动关闭了
+        # assert not CLOSE_SET.is_member(crawl_job_core.name)
+        if CLOSE_SET.is_member(crawl_job_core.name):
+            common.print_info("this crawl_job has been closed: {}".format(crawl_job_core.name))
+            return 
         assert layer >= 0 and layer < crawl_job_core.layer_cnt()
         # 如果到了最后一层，应该存数据到外村数据库
         if layer == crawl_job_core.layer_cnt()-1:

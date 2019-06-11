@@ -2,6 +2,7 @@
     "host":"localhost", 
     "port":6379,
     "decode_responses":true,
-    "queue_namespace":"crawler",
-    "queue_name":"queue"
+    "namespace":"crawler",
+    "queue_name":"queue",
+    "close_set_name":"close_set"
 }
