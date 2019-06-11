@@ -32,7 +32,10 @@ class CrawlJob:
         )
         self.core = crawl_job_core
         self.save_fn = save_fn
-        self.selectors = Selector.make_selector_list(self.core.selectors)
+        self.selectors = [
+            Selector.make_selector_list(rule["selectors"])
+            for rule in self.core.rules
+        ]
 
     # TODO 还没有去重功能，应该可以用布隆过滤器
     def work(self, driver, url, layer: int):
@@ -47,16 +50,16 @@ class CrawlJob:
         '''
         # 首先检查 url 合法性和 layer 合法性
         assert common.urltools.check_url(url)
-        assert layer >= 0 and layer < self.core.layer_cnt()
-        selectors = self.core.rules[layer]["selectors"]
+        assert isinstance(layer,int) and layer >= 0 and layer < self.core.layer_cnt()
+        selectors = self.selectors[layer]
         reg = self.core.rules[layer]["reg"]
         # 打印开始信息
         common.print_info(
-            "[Task start] --> CrawlJob({}): {}".format(self.core.name, url))
+            "[Task start: layer {}] --> CrawlJob({}): {}".format(layer, self.core.name, url))
         # driver:webdriver.firefox.webdriver.WebDriver
         driver.get(url)
         result_list = []
-        if len(self.selectors) <= 0:
+        if len(selectors) <= 0:
             content = driver.page_source
             if reg is not None:
                 result_list.extend(reg.findall(content))
@@ -68,7 +71,8 @@ class CrawlJob:
             for selector in selectors:
                 target = selector.select(target)
             for ele in target:
-                content = ele.get_attribute("innerHTML")
+                # content = ele.get_attribute("innerHTML")
+                content = ele.get_attribute("outerHTML")
                 if reg is not None:
                     result_list.extend(reg.findall(content))
                 else:
@@ -85,7 +89,7 @@ class CrawlJob:
             result_list=result_list)
         # 打印结束信息
         common.print_info(
-            "[Task done] ==> CrawlJob({}): {}".format(self.core.name, url))
+            "[Task done: layer {}] ==> CrawlJob({}): {}".format(layer, self.core.name, url))
 
     def tasks_gen(self, layer: int, urls: list):
         '''

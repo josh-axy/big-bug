@@ -65,9 +65,10 @@ class CrawlJobCore:
             rule:dict
             selectors = rule.get("selectors",[])
             reg = rule.get("reg",None)
-            if (not bool(selectors)) and (not bool(reg)):
-                # 如果该条规则为空，跳过
-                continue
+            # +++++++++ 空也不跳过 +++++++++
+            # if (not bool(selectors)) and (not bool(reg)):
+            #     # 如果该条规则为空，跳过
+            #     continue
             if selectors is None:
                 selectors = []
             if reg is not None:
@@ -90,7 +91,7 @@ class CrawlJobCore:
             reg = rule["reg"]
             rule_ls.append({
                 "selectors":selectors,
-                "reg":reg,
+                "reg":reg.pattern if reg else None,
             })
         x = {"name":self.name,"rules":rule_ls}
         _json_str = json.dumps(x,ensure_ascii=False)
