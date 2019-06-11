@@ -4,6 +4,8 @@ __all__=(
     "save_job",
     "remove_job",
     "save_results",
+    "get_job_result",
+    "get_job_list"
 )
 
 import functools
@@ -69,3 +71,15 @@ def save_results(crawl_job_core,url,result_list)->bool:
         如果 result_list 为空，不进行操作
     '''
     return misc._save_results(hbase_pool,crawl_job_core,url,result_list)
+
+def get_job_list()->list:
+    '''
+        获取hbase中存的job名称list
+    '''
+    return misc._get_job_list(hbase_pool)
+
+def get_job_result(crawl_job_name)->list:
+    '''
+        获取爬虫结果
+    '''
+    return misc._get_job_result(hbase_pool, crawl_job_name)

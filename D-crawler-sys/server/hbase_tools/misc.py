@@ -129,4 +129,43 @@ def _save_results(pool: happybase.ConnectionPool,
             pass
         finally:
             conn.close()  # 关闭连接
-            
+
+
+def _get_job_list(pool: happybase.ConnectionPool)->list:
+    '''
+        获取hbase中存的job名称list
+    '''
+    with pool.connection() as conn:
+        try:
+            conn: happybase.Connection
+            table_list = conn.tables()
+            return table_list
+        except Exception as e:
+            common.print_exception(e)
+            return None
+            pass
+        finally:
+            conn.close()  # 关闭连接
+
+
+def _get_job_result(pool: happybase.ConnectionPool, crawl_job_name)->list:
+    '''
+        获取爬虫结果
+    '''
+    with pool.connection() as conn:
+        try:
+            conn: happybase.Connection
+            table = conn.table(crawl_job_name)
+            result_list = []
+            for key, value in table.scan():
+                tmp={}
+                tmp['url']=key
+                tmp['result']=value
+                result_list.append(tmp)
+            return result_list
+        except Exception as e:
+            common.print_exception(e)
+            return None
+            pass
+        finally:
+            conn.close()  # 关闭连接

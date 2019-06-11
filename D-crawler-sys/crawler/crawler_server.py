@@ -112,6 +112,7 @@ class CrawlerServer:
             if job_core is None:
                 raise CrawlJobException(
                     "No such crawl job: {}".format(crawl_job_name))
+            self.job_lru_cache.put(crawl_job_name,job_core)
         self.C.add_urls(job_core, layer, urls)
 
     def save_fn(self,

@@ -4,7 +4,7 @@ __all__=(
 )
 
 import common
-import redis
+# import redis
 from .redis_queue import RedisQueue
 from .redis_set import RedisSet
 
@@ -16,12 +16,24 @@ namespace = c["namespace"]
 queue_name = c["queue_name"]
 close_set_name = c["close_set_name"]
 
-connection_pool = redis.ConnectionPool(host=host, port=port)
-# redis的默认参数为：host='localhost', port=6379, db=0， 其中db为定义redis database的数量
-redis_conn = redis.StrictRedis(
-    connection_pool=connection_pool,
-    decode_responses=decode_responses
-)
+if c["single_node_mode"]:
+    import redis
+    connection_pool = redis.ConnectionPool(host=host, port=port)
+    # redis的默认参数为：host='localhost', port=6379, db=0， 其中db为定义redis database的数量
+    redis_conn = redis.StrictRedis(
+        connection_pool=connection_pool,
+        decode_responses=decode_responses
+    )
+    redis_nodes = [{'host':host,'port':port}]
+
+else:
+    import rediscluster
+    redis_nodes = c["master_nodes"]
+    # redis_conn = rediscluster.StrictRedisCluster(host=host,port=port)
+    redis_conn = rediscluster.StrictRedisCluster(
+        startup_nodes=redis_nodes,
+        decode_responses=decode_responses
+    )
 
 QUEUE = RedisQueue(
     redis_conn = redis_conn,

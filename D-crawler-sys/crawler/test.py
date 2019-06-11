@@ -41,6 +41,7 @@ print("3333")
 task_json = crawler.CrawlTaskJson(job_core.name,0,urls)
 task_json_str = task_json.get_json()
 redis_tools.CLOSE_SET.add(job_core.name)
+redis_tools.CLOSE_SET.remove(job_core.name)
 redis_tools.QUEUE.put(task_json_str)
 print("4444")
 
