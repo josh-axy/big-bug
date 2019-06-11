@@ -17,8 +17,8 @@ class CrawlerService:
     def __init__(self, save_fn: Callable):
         # 先判断 save_fn 的参数是否符合要求
         assert (
-            set(common.inspect.get_params(save_fn)) == \
-                set(("crawl_job_core","url","result_list"))
+            set(common.inspect.get_params(save_fn)) ==
+            set(("layer","crawl_job_core", "url", "result_list"))
         )
         self.task_queue = TaskQueue(maxsize=50)
         self.crawler = Crawler(
@@ -45,9 +45,9 @@ class CrawlerService:
         self.task_queue.close()
         self.crawler.close()
 
-    def add_urls(self, crawl_job_core:CrawlJobCore, urls: Iterable):
+    def add_urls(self, crawl_job_core:CrawlJobCore,layer:int, urls: Iterable):
         job = CrawlJob(crawl_job_core,self.save_fn)
-        self.task_queue.add_tasks(job, urls)
+        self.task_queue.add_tasks(job,layer,urls)
 
     # def add_crawl_job(self, core: CrawlJobCore):
     #     assert isinstance(

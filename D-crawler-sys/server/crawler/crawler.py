@@ -14,13 +14,19 @@ class DriverCnt:
         限定打开的 webdriver 数量范围
         (我这里只是试了一下python属性描述符而已)
     '''
+    _cnt = common.args.driver_cnt
+    _max = common.args.max_driver_cnt
+    _min = common.args.min_driver_cnt
+
     def __init__(self,name):
         self.name = name
 
     def __set__(self,instance,value):
         assert isinstance(value,int)
-        value = value if value > 1 and value < 10 else 3
+        value = value if value >= self._min and value <= self._max else self._cnt
         instance.__dict__[self.name]=value
+
+
 
 class Crawler:
     '''
