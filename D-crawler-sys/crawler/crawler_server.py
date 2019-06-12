@@ -16,6 +16,8 @@ from redis_tools import QUEUE
 from redis_tools import CLOSE_SET
 import hbase_tools as DB
 
+import time
+
 
 class CrawlJobException(Exception):
     def __init__(self, msg):
@@ -87,6 +89,8 @@ class CrawlerServer:
                 # 判断是否为合法url
                 for url in task_info.urls:
                     assert common.urltools.check_url(url)
+                # 阻塞一段时间，防止其他节点抢不到
+                time.sleep(0.5)
                 self.add_urls(
                     task_info.job_name,
                     task_info.layer,

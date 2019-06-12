@@ -9,6 +9,18 @@ import common
 import crawler
 import hbase_tools
 import redis_tools
+import random, string
+
+def generate_random_str(randomlength=16):
+    """
+    生成一个指定长度的随机字符串
+    """
+    random_str = ''
+    base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
+    length = len(base_str) - 1
+    for i in range(randomlength):
+        random_str += base_str[random.randint(0, length)]
+    return random_str
 
 
 class MyEncoder(json.JSONEncoder):
@@ -45,9 +57,15 @@ def json_test(str):
 # 列出当前存在的 job （即job表）列表
 @route('/jobList')
 def job_list():
+    job_list = []
     result = {}
     result['success'] = True
-    job_list = hbase_tools.get_job_list()
+    job_name_list = hbase_tools.get_job_list()
+    for i in range(len(job_name_list)):
+        tmp_dict = {}
+        tmp_dict['id'] = generate_random_str(24);
+        tmp_dict['job_name'] = job_name_list[i];
+        job_list.append(tmp_dict)
     print(job_list)
     print(job_list is None)
     if job_list is None:
@@ -83,15 +101,15 @@ def create_job():
 
 # 创建 task 加入 redis 队列
 @route('/createTask')
-def create_task(job_name:str, url:str):
+def create_task():
     job_name = '',
-    url = ''
+    urls = []
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
-        url = request.POST.get('url')
+        urls = request.POST.getlist('urls')
     result = {}
     result['success'] = True
-    task_json = crawler.CrawlTaskJson(job_name,0,url)
+    task_json = crawler.CrawlTaskJson(job_name,0,urls)
     task_json_str = task_json.get_json()
     redis_tools.QUEUE.put(task_json_str)
     return result
@@ -113,8 +131,54 @@ def get_result():
         result['data'] = json.dumps(result_list, cls=MyEncoder)
     return result
 
+# 暂停job
+@route('/pauseJob')
+def pause_job():
+    job_name = ''
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
+    result = {}
+    result['success'] = True
+    if not redis_tools.CLOSE_SET.is_member(job_name):
+        # 向close_set里加入该job_name
+        redis_tools.CLOSE_SET.add(job_name)
+    return result
 
-# （中途）终止爬虫 job
+# 修改爬虫
+@route('/updateJob')
+def update_job():
+    job_name = '',
+    url = ''
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
+        url = request.POST.get('url')
+    result = {}
+    result['success'] = True
+    job_core = hbase_tools.get_job_rule(job_name)
+    if hbase_tools.set_job_rule(job_core):
+        if not redis_tools.CLOSE_SET.is_member(job_name):
+            # 向close_set里加入该job_name
+            redis_tools.CLOSE_SET.remove(job_name)
+        return result
+    else:
+        result['success'] = False
+        return result
+    
+
+# # 继续爬虫
+# @route('/restartJob')
+# def restart_job():
+#     job_name = ''
+#     if request.method == 'POST':
+#         job_name = request.POST.get('job_name')
+#     result = {}
+#     result['success'] = True
+#     if not redis_tools.CLOSE_SET.is_member(job_name):
+#         # 向close_set里加入该job_name
+#         redis_tools.CLOSE_SET.remove(job_name)
+#     return result
+
+# （中途）终止爬虫
 # 暂时没做
 @route('/killCrawler')
 def kill_crawler():

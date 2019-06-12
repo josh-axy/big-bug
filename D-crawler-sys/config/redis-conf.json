@@ -1,5 +1,5 @@
 {
-    "single_node_mode":false,
+    "single_node_mode":true,
     "host":"localhost", 
     "port":6379,
     "decode_responses":true,
