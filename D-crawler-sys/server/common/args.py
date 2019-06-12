@@ -8,6 +8,7 @@ __all__=(
     "hdfs_conf",
     "hbase_conf",
     "zk_conf",
+    "server_conf"
     # "hdfs_url",
     # "hbase_url",
 )
@@ -34,6 +35,7 @@ redis_conf = get_config("redis-conf.json")
 hdfs_conf = get_config("hdfs-conf.json")
 hbase_conf = get_config("hbase-conf.json")
 zk_conf = get_config("zookeeper-conf.json")
+server_conf = get_config("server-conf.json")
 
 # hdfs_url = "{}://{}:{}".format(
 #     hdfs_conf["protocol"],

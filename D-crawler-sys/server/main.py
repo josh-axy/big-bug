@@ -59,17 +59,22 @@ def job_list():
 
 
 # 创建 job_core，并存入 hbase
-@route('/createJob/<job_name>/<rules>')
-def create_job(job_name:str, rules:list):
+@route('/createJob')
+def create_job():
+    job_name = ''
+    rules = []
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
+        print(job_name)
+        rules = request.POST.getlist('rules')
+        print(rules)
     result = {}
     result['success'] = True
-    print(job_name)
-    print(rules)
-    json_rules = json.loads(rules)
-    print(json_rules)
-    print(type(json_rules))
     crawl_job = crawler.CrawlJobCore(job_name, rules)
     if hbase_tools.save_job(crawl_job):
+        if redis_tools.CLOSE_SET.is_member(job_name):
+            # 从close_set里移除该job_name
+            redis_tools.CLOSE_SET.remove(job_name)
         return result
     else:
         result['success'] = False
@@ -77,8 +82,13 @@ def create_job(job_name:str, rules:list):
 
 
 # 创建 task 加入 redis 队列
-@route('/createTask/<job_name>/<url>')
+@route('/createTask')
 def create_task(job_name:str, url:str):
+    job_name = '',
+    url = ''
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
+        url = request.POST.get('url')
     result = {}
     result['success'] = True
     task_json = crawler.CrawlTaskJson(job_name,0,url)
@@ -88,8 +98,11 @@ def create_task(job_name:str, url:str):
 
 
 # 从 hbase 取出爬取结果
-@route('/getResult/<job_name>')
-def get_result(job_name):
+@route('/getResult')
+def get_result():
+    job_name = ''
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
     result = {}
     result['success'] = True
     result_list = hbase_tools.get_job_result(job_name)
@@ -103,10 +116,16 @@ def get_result(job_name):
 
 # （中途）终止爬虫 job
 # 暂时没做
-@route('/killCrawler/<job_name>')
-def kill_crawler(job_name):
+@route('/killCrawler')
+def kill_crawler():
+    job_name = ''
+    if request.method == 'POST':
+        job_name = request.POST.get('job_name')
     result = {}
     result['success'] = True
+    if not redis_tools.CLOSE_SET.is_member(job_name):
+        # 向close_set里加入该job_name
+        redis_tools.CLOSE_SET.add(job_name)
     if hbase_tools.remove_job(job_name):
         return result
     else:
@@ -114,14 +133,6 @@ def kill_crawler(job_name):
         return result
     return result
 
-
-# 根据 url 列表文件和 job 名字向 redis 队列里添加task
-# @route('/addTask/<job_name>/<url>')
-# def add_task(job_name, url):
-#     result = {}
-#     result['success'] = True
-    
-#     return result
 
 
 # 显示当前 job 已经做完的 task 数量
@@ -132,5 +143,7 @@ def kill_crawler(job_name):
     
 #     return result
 
+host_num = common.args.server_conf["host"]
+port_num = common.args.server_conf["port"]
 
-run(host='localhost', port=9092, debug=True)
+run(host=host_num, port=port_num, debug=True)
