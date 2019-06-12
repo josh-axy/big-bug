@@ -35,7 +35,10 @@ urls=[
     "https://movie.douban.com/top250"
 ]
 
-hbase_tools.remove_job(job_core.name)
+try:
+    hbase_tools.remove_job(job_core.name)
+finally:
+    pass
 hbase_tools.save_job(job_core)
 print("3333")
 task_json = crawler.CrawlTaskJson(job_core.name,0,urls)

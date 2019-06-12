@@ -1,5 +1,5 @@
 {
-    "single_node_mode":true,
+    "single_node_mode":false,
     "host":"localhost", 
     "port":6379,
     "decode_responses":true,
@@ -7,9 +7,12 @@
     "queue_name":"queue",
     "close_set_name":"close_set",
     "master_nodes":[
-        {"host":"192.168.75.135","port":"7011"},
-        {"host":"192.168.75.135","port":"7012"},
-        {"host":"192.168.75.135","port":"7013"}
+        {"host":"192.168.109.132","port":"7011"},
+        {"host":"192.168.109.132","port":"7012"},
+        {"host":"192.168.109.132","port":"7013"},
+	{"host":"192.168.109.132","port":"7014"},
+        {"host":"192.168.109.132","port":"7015"},
+        {"host":"192.168.109.132","port":"7016"}
     ]
 }
 
