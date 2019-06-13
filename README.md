@@ -55,4 +55,7 @@
     ]
 }
 ```
+3. 在项目目录运行 `python -m http.server` 命令，在该目录启动web服务器，主页为该目录下的 index.html。输出的端口号即之后web页面的端口号。
+4. 运行 `bash run-crawler.sh` 启动爬虫端；运行 `bash run-server.sh` 启动服务端。
+
 
