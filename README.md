@@ -1,38 +1,48 @@
-# D-crawler-sys
+# D-crawler-sys (BIG BUG)
 
 #### 介绍
-大数据软件技术大作业：分布式爬虫
-使用了 redis, hbase, zookeeper
+大数据软件技术大作业：分布式爬虫 BIG BUG
+使用了 redis, hbase
 
-#### 软件架构
-软件架构说明
+一开始还考虑到使用 zookeeper 做状态管理，用redis布隆过滤器插件做重复url的剔除。
+
+但因为时间不够放弃了
+
+
 
 
 #### 安装教程
 
-1. xxxx
-2. xxxx
-3. xxxx
+1. 分布式安装配置 redis，hdfs，hbase （其中redis-cluster的配置相当的繁琐）
 
-#### 使用说明
+2. 安装python3.6，pypi
 
-1. xxxx
-2. xxxx
-3. xxxx
+3. 找到 pip-requirements.txt 文件，执行命令： `pip install -r requriements.txt`
 
-#### 参与贡献
+   
 
-1. Fork 本仓库
-2. 新建 Feat_xxx 分支
-3. 提交代码
-4. 新建 Pull Request
+#### 使用注意点
 
+1. 使用前先对 config 文件夹下各文件进行配置，主要是配置 redis, hbase-thrift 的 host 和 端口号。
 
-#### 码云特技
+2. 要特别注意 redis-conf.json文件
 
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+   single_node_mode 为 true 时，使用单机配置，即 "host","ip"；为 false 使用集群配置，即 "master_nodes"
+
+```json
+{
+    "single_node_mode":false,
+    "host":"localhost", 
+    "port":6379,
+    "decode_responses":true,
+    "namespace":"crawler",
+    "queue_name":"queue",
+    "close_set_name":"close_set",
+    "master_nodes":[
+        {"host":"192.168.133.128","port":"7001"},
+		{"host":"192.168.133.128","port":"7002"},
+		{"host":"192.168.133.128","port":"7003"}
+    ]
+}
+```
+
