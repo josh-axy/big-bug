@@ -19,6 +19,16 @@
 
 3. 找到 pip-requirements.txt 文件，执行命令： `pip install -r requriements.txt`
 
+   ```
+   aiohttp==3.3.2
+   happybase==1.2.0
+   redis==3.2.1
+   rediscluster==0.5.3
+   selenium==3.141.0
+   Beaker==1.10.1
+   bottle==0.12.16
+   ```
+   
    
 
 #### 使用注意点
