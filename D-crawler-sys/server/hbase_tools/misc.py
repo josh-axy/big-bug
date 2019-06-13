@@ -157,10 +157,11 @@ def _get_job_result(pool: happybase.ConnectionPool, crawl_job_name)->list:
             conn: happybase.Connection
             table = conn.table(crawl_job_name)
             result_list = []
-            for key, value in table.scan():
+            for key, value in table.scan(include_timestamp=True):
                 tmp={}
-                tmp['url']=key
-                tmp['result']=value
+                tmp['url']=key.decode("utf-8")
+                # tmp['result']={ele.decode("utf-8"):value[ele].decode("utf-8") for ele in value}
+                tmp['result']={ele.decode("utf-8"):(value[ele][0].decode("utf-8"),value[ele][1]) for ele in value}
                 result_list.append(tmp)
             return result_list
         except Exception as e:

@@ -66,8 +66,8 @@ def job_list():
         tmp_dict['id'] = generate_random_str(24);
         tmp_dict['job_name'] = job_name_list[i];
         job_list.append(tmp_dict)
-    print(job_list)
-    print(job_list is None)
+    #print(job_list)
+    #print(job_list is None)
     if job_list is None:
         result['success'] = False
         return result
@@ -77,14 +77,18 @@ def job_list():
 
 
 # 创建 job_core，并存入 hbase
-@route('/createJob')
+@route('/createJob', method="POST")
 def create_job():
     job_name = ''
     rules = []
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
         print(job_name)
-        rules = request.POST.getlist('rules')
+        rules = request.POST.get('rules')
+        rules = json.loads(rules)
+        for rule in rules:
+            if rule['reg'] == '':
+                rule['reg'] = None
         print(rules)
     result = {}
     result['success'] = True
@@ -100,30 +104,34 @@ def create_job():
 
 
 # 创建 task 加入 redis 队列
-@route('/createTask')
+@route('/createTask', method="POST")
 def create_task():
     job_name = '',
     urls = []
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
-        urls = request.POST.getlist('urls')
+        urls = request.POST.get('urls')
+        urls = json.loads(urls)
     result = {}
     result['success'] = True
-    task_json = crawler.CrawlTaskJson(job_name,0,urls)
-    task_json_str = task_json.get_json()
-    redis_tools.QUEUE.put(task_json_str)
+    for i in range(0, len(urls), 2):
+        task_json = crawler.CrawlTaskJson(job_name,0,urls[i:i+2])
+        task_json_str = task_json.get_json()
+        redis_tools.QUEUE.put(task_json_str)
     return result
 
 
 # 从 hbase 取出爬取结果
-@route('/getResult')
+@route('/getResult', method="POST")
 def get_result():
     job_name = ''
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
+        #print(job_name)
     result = {}
     result['success'] = True
     result_list = hbase_tools.get_job_result(job_name)
+    #print(result_list)
     if result_list is None:
         result['success'] = False
         return result
@@ -145,13 +153,14 @@ def pause_job():
     return result
 
 # 修改爬虫
-@route('/updateJob')
+@route('/updateJob', method="POST")
 def update_job():
     job_name = '',
     url = ''
     if request.method == 'POST':
         job_name = request.POST.get('job_name')
-        url = request.POST.get('url')
+        rules = request.POST.get('rules')
+        rules = json.loads(rules)
     result = {}
     result['success'] = True
     job_core = hbase_tools.get_job_rule(job_name)
@@ -178,9 +187,8 @@ def update_job():
 #         redis_tools.CLOSE_SET.remove(job_name)
 #     return result
 
-# （中途）终止爬虫
-# 暂时没做
-@route('/killCrawler')
+# 删除爬虫
+@route('/killCrawler', method="POST")
 def kill_crawler():
     job_name = ''
     if request.method == 'POST':

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="zh-CN"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang="zh-CN"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang="zh-CN"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="zh-CN"> <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Big Bug</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="favicon.ico">
+  <link href="http://cdn.bootcss.com/highlight.js/9.15.7/styles/github.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/main.css">
+  <!-- CSS Implementing Plugins -->
+  <link rel="stylesheet" href="assets/vendor/font-awesome/css/fontawesome-all.min.css">
+  <!-- CSS Front Template -->
+  <link rel="stylesheet" href="assets/css/theme.css">
+  <script src="js/vendor/modernizr-2.6.2.min.js"></script>
+</head>
+<body>
+<!--[if lt IE 7]>
+<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+<![endif]-->
+
+<!-- Site content -->
+<div id="vue-app" class="text-center space-top-2">
+  <p class="display-4">JOB #{{jobId}}</p>
+  <div>
+    <a class="btn btn-soft-secondary mt-6" href="./">返回主页</a>
+  </div>
+  <h3 class="mt-6">任务名称 <span class="text-danger">*</span></h3>
+  <div class="container">
+    <div class="row justify-content-center">
+      <!-- Input -->
+      <div class="col-sm-8 text-left">
+        <div class="js-form-message">
+          <div class="js-focus-state input-group u-form">
+            <input class="form-control u-form__input" name="name" v-model="currentJob.name" required maxlength="32"
+                   :disabled="!newJob"
+                   placeholder="任务名称"
+                   aria-label="任务名称"
+                   data-msg="请输入任务名称"
+                   data-error-class="u-has-error"
+                   data-success-class="u-has-success">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h3 class="mt-6">爬虫规则 <span class="text-danger">*</span></h3>
+  <div class="container">
+    <div v-for="(rule,ruleIndex) in currentJob.rules" class="row justify-content-center">
+      <!-- Input -->
+      <div class="col-sm-8 text-left">
+        <div class="js-form-message">
+          <label class="h6 small d-block text-uppercase">
+            第{{ruleIndex+1}}层
+            <span class="text-danger">*</span>
+          </label>
+          <button type="button" class="btn btn-soft-secondary mb-3" @click="addSelector(ruleIndex)">增加选择器</button>
+          <button type="button" class="btn btn-soft-danger mb-3" @click="dropLevel(ruleIndex)">删除本层级所有规则</button>
+          <div v-for="(item,index) in rule.selectors" class="js-form-message mb-3">
+            <div class="js-focus-state input-group u-form">
+              <div class="input-group-prepend">
+                <span class="input-group-text">选择器#{{index+1}}</span>
+              </div>
+              <input class="form-control" v-model="rule.selectors[index][0]"
+                     placeholder="CSS选择器"
+                     aria-label="CSS选择器"
+                     data-msg="请输入CSS选择器"
+                     data-error-class="u-has-error"
+                     data-success-class="u-has-success"/>
+              <div class="input-group-append">
+                <div class="custom-control custom-checkbox input-group-text">
+                  <input type="checkbox" :id="'customSwitch'+ruleIndex+index" :name="'customSwitch'+ruleIndex+index" class="custom-control-input" v-model="rule.selectors[index][1]">
+                  <label class="custom-control-label" :for="'customSwitch'+ruleIndex+index">多选</label>
+                </div>
+                <button class="btn btn-sm btn-outline-danger font-weight-normal" type="button" @click="dropSelector(ruleIndex,index)">删除</button>
+              </div>
+            </div>
+          </div>
+          <div class="js-form-message mb-3">
+            <div class="js-focus-state input-group u-form">
+              <div class="input-group-prepend">
+                <span class="input-group-text">正则匹配</span>
+              </div>
+              <input class="form-control" v-model="rule.reg"
+                     placeholder="正则表达式"
+                     aria-label="正则表达式"
+                     data-msg="请输入正则表达式"
+                     data-error-class="u-has-error"
+                     data-success-class="u-has-success"/>
+              <div class="input-group-append">
+                <code class="input-group-text perl">{{rule.reg}}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" class="btn btn-soft-success mb-6" @click="addLevel">增加规则层级</button>
+    <button type="button" class="btn btn-soft-primary mb-6" @click="createJob" v-if="newJob">完成创建</button>
+    <button type="button" class="btn btn-soft-primary mb-6" @click="updateJob" v-else>保存规则</button>
+    <button type="button" class="btn btn-soft-danger mb-6" @click="deleteJob" v-if="!newJob">删除任务</button>
+  </div>
+  <div v-if="!newJob">
+      <h3 class="mt-6">控制台</h3>
+  <div class="container">
+    <div class="row justify-content-center">
+        <div class="form-group col-sm-8 text-left">
+            <label for="task" class="h6 small d-block text-uppercase">目标URL</label>
+            <textarea id="task" class="form-control" rows="5" placeholder="可输入多行URL，请勿用符号分隔符" v-model="taskUrls" @input="updateTaskUrls"></textarea>
+        </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" class="btn btn-soft-primary mt-6" @click="startJob">执行任务</button>
+    <button type="button" class="btn btn-soft-danger mt-6" @click="stopJob">终止任务</button>
+  </div>
+  <h3 class="mt-6">执行结果</h3>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div v-for="result in currentResult" v-if="result.url!='__rule__'" class="table-responsive-md u-datatable col-sm-12 text-left">
+        <table class="js-datatable table table-borderless u-datatable__striped u-datatable__content u-datatable__trigger mb-5">
+          <thead>
+          <tr class="text-uppercase font-size-1">
+              <th scope="col" class="font-weight-medium">
+                  <div class="d-flex justify-content-between align-items-center">
+                    URL
+                    <div class="ml-2">
+                      <span class="fas fa-angle-up u-datatable__thead-icon"></span>
+                      <span class="fas fa-angle-down u-datatable__thead-icon"></span>
+                    </div>
+                  </div>
+                </th>
+            <th scope="col" class="font-weight-medium">
+              <div class="d-flex justify-content-between align-items-center">
+                内容
+                <div class="ml-2">
+                  <span class="fas fa-angle-up u-datatable__thead-icon"></span>
+                  <span class="fas fa-angle-down u-datatable__thead-icon"></span>
+                </div>
+              </div>
+            </th>
+            <th scope="col" class="font-weight-medium">
+              <div class="d-flex justify-content-between align-items-center">
+                时间
+                <div class="ml-2">
+                  <span class="fas fa-angle-up u-datatable__thead-icon"></span>
+                  <span class="fas fa-angle-down u-datatable__thead-icon"></span>
+                </div>
+              </div>
+            </th>
+          </tr>
+          </thead>
+          <tbody class="font-size-1">
+          <tr v-for="item in result.result">
+            <td class="align-middle text-primary"><a :href="result.url" class="link-muted">{{result.url}}</a></td>
+            <td>
+              <code class="html">{{item[0]}}</code>
+            </td>
+            <td class="align-middle text-primary">{{item[1]}}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<!-- JS Global Compulsory -->
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>window.jQuery || document.write('<script src="assets/vendor/jquery/dist/jquery.min.js"><\/script>')</script>
+<script src="https://cdn.bootcss.com/jquery-migrate/3.0.1/jquery-migrate.min.js"></script>
+<script>window.jQuery || document.write('<script src="assets/vendor/jquery-migrate/dist/jquery-migrate.min.js"><\/script>')</script>
+<script src="https://cdn.bootcss.com/highlight.js/9.15.8/highlight.min.js"></script>
+<script src="assets/vendor/popper.js/dist/umd/popper.min.js"></script>
+<script src="assets/vendor/bootstrap/bootstrap.min.js"></script>
+<script src="https://cdn.bootcss.com/vue/2.6.10/vue.js"></script>
+<!-- JS Implementing Plugins -->
+<script src="assets/vendor/datatables/media/js/jquery.dataTables.min.js"></script>
+<!-- JS Front -->
+<script src="assets/js/hs.core.js"></script>
+<script src="assets/js/components/hs.datatables.js"></script>
+<!-- JS Page Init -->
+<script src="js/utils.js"></script>
+<script src="js/vue-app.js"></script>
+<script src="js/plugins.js"></script>
+<script src="js/main.js"></script>
+<!-- Google Analytics: change UA-XXXXX-X to be your site's ID.
+<script>
+    (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+    function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+    e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+    e.src='//www.google-analytics.com/analytics.js';
+    r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+    ga('create','UA-141912488-1');ga('send','pageview');
+</script> -->
+</body>
+</html>
