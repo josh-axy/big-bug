@@ -1,4 +1,4 @@
-aiohttp==3.3.2
+aiohttp==3.7.4
 happybase==1.2.0
 redis==3.2.1
 rediscluster==0.5.3
