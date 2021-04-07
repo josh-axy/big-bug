@@ -4,4 +4,4 @@ redis==3.2.1
 rediscluster==0.5.3
 selenium==3.141.0
 Beaker==1.10.1
-bottle==0.12.16
+bottle==0.12.19
